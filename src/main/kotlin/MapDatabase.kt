@@ -1,22 +1,23 @@
 import java.io.File
 
-class MapDatabase(databaseName : String) : DatabaseInterface {
+/** Implementation of DatabaseInterface by map. Initializes by path to database. Path must be correct. */
+class MapDatabase(databasePath : String) : DatabaseInterface {
     private val data = mutableMapOf<String, String>()
-    private val name = databaseName
+    private val path = databasePath
 
     init {
-        data.clear()
-        val allDataInFile = File(name).readLines()
+        require(File(path).exists()) {"File with given path must exists, was $path"}
+        val allDataInFile = File(path).readLines()
         for (i in allDataInFile.indices step 2)
             data[allDataInFile[i]] = allDataInFile[i + 1]
     }
 
-    override fun journalName() : String {
-        return "${name}Journal"
+    override fun journalPath() : String {
+        return "${path}Journal"
     }
 
-    override fun assignValue(newElem : Element) {
-        data[newElem.key] = newElem.value
+    override fun assignValue(key : String, value : String) {
+        data[key] = value
     }
 
     override fun removeElement(key : String) : String? {
@@ -43,7 +44,7 @@ class MapDatabase(databaseName : String) : DatabaseInterface {
             text.append("${elem.key}\n")
             text.append("${elem.value}\n")
         }
-        File(name).writeText(text.toString())
+        File(path).writeText(text.toString())
     }
 
     override fun printAllContent() {

@@ -1,28 +1,32 @@
 import java.io.File
 
-class ArrayDatabase(databaseName : String) : DatabaseInterface {
+/** Inner element of ArrayDatabase */
+class Element(val key : String, val value: String)
+
+/** Array implementation of DatabaseInterface. Initializes by path to database. Path must be correct. */
+class ArrayDatabase(pathToDatabase : String) : DatabaseInterface {
     private val data = arrayListOf<Element>()
-    private val name = databaseName
+    private val path = pathToDatabase
 
     init {
-        data.clear()
-        val allDataInFile = File(name).readLines()
+        require(File(path).exists()) {"File with given path must exists, was $path"}
+        val allDataInFile = File(path).readLines()
         for (i in allDataInFile.indices step 2)
             data += Element(allDataInFile[i], allDataInFile[i + 1])
     }
 
-    override fun journalName() : String {
-        return "${name}Journal"
+    override fun journalPath() : String {
+        return "${path}Journal"
     }
 
-    override fun assignValue(newElem : Element) {
-        if (!contains(newElem.key)) {
-            data += newElem
+    override fun assignValue(key : String, value : String) {
+        if (!contains(key)) {
+            data += Element(key, value)
             return
         }
         for (ind in data.indices)
-            if (data[ind].key == newElem.key)
-                data[ind] = newElem
+            if (data[ind].key == key)
+                data[ind] = Element(key, value)
     }
 
     override fun removeElement(key : String) : String? {
@@ -55,7 +59,7 @@ class ArrayDatabase(databaseName : String) : DatabaseInterface {
             text.append("${elem.key}\n")
             text.append("${elem.value}\n")
         }
-        File(name).writeText(text.toString())
+        File(path).writeText(text.toString())
     }
 
     override fun printAllContent() {
