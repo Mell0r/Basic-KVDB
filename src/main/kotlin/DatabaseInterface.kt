@@ -8,7 +8,8 @@ interface DatabaseInterface {
     /** Assigns the given value to the given key. If key haven't been in the database, creates new element. */
     fun assignValue(key : String, value : String) {}
 
-    /** Removes element with the given key from the database and returns its value or null, if this key isn't in database. */
+    /** Removes element with the given key from the database and returns its value or null,
+     * if this key isn't in database. */
     fun removeElement(key : String) : String? = null
 
     /** Returns value of element with the given key or null, if this key isn't in the database. */
@@ -20,9 +21,10 @@ interface DatabaseInterface {
     /** Saves the database in the file. */
     fun save() {}
 
-    /** Print all content in the database. */
-    fun printAllContent() {}
+    /** Returns all content in database as List<String>, where each string is "*elem.key*\n*elem.value" for each
+     * database element. */
+    fun allContent() : List<String> = listOf()
 
-    /** Delete all elements from the database. */
+    /** Deletes all elements from the database. */
     fun clear() {}
 }

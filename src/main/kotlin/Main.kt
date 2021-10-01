@@ -213,7 +213,11 @@ fun save() {
 fun printAllContent() {
     if (checkNotOpened())
         return
-    currentDatabase?.printAllContent()
+    val content = currentDatabase!!.allContent()
+    for (elem in content) {
+        println("Key: ${elem.split('\n')[0]}")
+        println("Value: ${elem.split('\n')[1]}")
+    }
 }
 
 /** Checks database by 'checkNotOpened' and call 'clear' for it, if it is open */

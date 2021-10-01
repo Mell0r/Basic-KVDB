@@ -47,12 +47,7 @@ class MapDatabase(databasePath : String) : DatabaseInterface {
         File(path).writeText(text.toString())
     }
 
-    override fun printAllContent() {
-        data.forEach { elem ->
-            println("Key: ${elem.key}")
-            println("Value: ${elem.value}")
-        }
-    }
+    override fun allContent() : List<String> = data.map { elem -> "${elem.key}\n${elem.value}\n" }
 
     override fun clear() {
         data.clear()
