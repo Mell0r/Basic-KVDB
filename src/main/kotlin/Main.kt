@@ -8,18 +8,18 @@ var currentDatabase : DatabaseInterface? = null //current opened database. It is
 /** Prints short manual */
 fun printManual() {
     println("Available commands:")
-    println("* 'createDb' - create new database wth given name.")
-    println("* 'openDb' - open database with given name by given mode. Processing mods are 'a'(Array) or 'm'(Map). Chosen mod " +
+    println("* 'create' - create new database wth given name.")
+    println("* 'open' - open database with given name by given mode. Processing mods are 'a'(Array) or 'm'(Map). Chosen mod " +
             "defines how data will store in RAM. Enter this command before work with database.")
-    println("* 'deleteDb' - delete database with given name.")
-    println("* 'clearDb' - clear opened database.")
-    println("* 'saveDb' - save changes in the opened database in the file 'data.txt'.")
-    println("* 'closeDb' - save and close the opened database.")
+    println("* 'delete' - delete database with given name.")
+    println("* 'save' - save changes in the opened database.")
+    println("* 'close' - save and close the opened database.")
     println("* 'assign' - assign given value to given key in the opened database. If element  with given key " +
             "already exists, its value rewrites.")
     println("* 'remove' - remove element from the database. If element doesn't exist, nothing happens.")
     println("* 'value' - get value by the key. If element with this key doesn't exist, print error message.")
     println("* 'contains' - print 'true', then database contains given element, and 'false' otherwise.")
+    println("* 'clear' - clear opened database.")
     println("* 'allContent' - print all content in the open database.")
     println("* 'script' - complete all commands in the given text file.")
     println("* 'lastActions' - print given number of previous actions with the opened database.")
@@ -111,6 +111,8 @@ fun openDatabase() {
 
 /** Interacting with user function. Asks the name of the database and delete it */
 fun deleteDatabase() {
+    if (currentDatabase != null)
+        closeDatabase()
     print("Enter database name or 'back': ")
     var input = readLine()
     while (input == null || input == "" || (input != "back" && !File(pathByName(input)).exists())) {
@@ -170,10 +172,6 @@ fun contains() {
         return
     val key = readString("key")
     println(currentDatabase?.contains(key))
-}
-
-fun script() {
-    TODO()
 }
 
 /** Interacting with user function. Checks database by 'checkNotOpened', asks user for quantity
@@ -243,16 +241,16 @@ fun main() {
     while (command != null && command != "exit") {
         when (command) {
             "help" -> printManual()
-            "createDb" -> createDatabase()
-            "deleteDb" -> deleteDatabase()
-            "openDb" -> openDatabase()
-            "saveDb" -> save()
-            "clearDb" -> clearDatabase()
-            "closeDb" -> closeDatabase()
+            "create" -> createDatabase()
+            "delete" -> deleteDatabase()
+            "open" -> openDatabase()
+            "save" -> save()
+            "clear" -> clearDatabase()
+            "close" -> closeDatabase()
             "assign" -> assignValue()
             "remove" -> removeElement()
             "value" -> getValue()
-            "script" -> script()
+            "script" -> scriptUI()
             "contains" -> contains()
             "allContent" -> printAllContent()
             "lastActions" -> lastActions()
