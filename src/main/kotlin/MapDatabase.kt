@@ -1,7 +1,7 @@
 import java.io.File
 
 /** Implementation of DatabaseInterface by map. Initializes by path to database. Path must be correct. */
-class MapDatabase(databasePath : String) : DatabaseInterface {
+class MapDatabase(databasePath : String) : Database {
     private val data = mutableMapOf<String, String>()
     private val path = databasePath
 
@@ -12,9 +12,7 @@ class MapDatabase(databasePath : String) : DatabaseInterface {
             data[allDataInFile[i]] = allDataInFile[i + 1]
     }
 
-    override fun journalPath() : String {
-        return "${path}Journal"
-    }
+    override fun journalPath() : String = "${path}Journal"
 
     override fun assignValue(key : String, value : String) {
         data[key] = value
@@ -26,17 +24,9 @@ class MapDatabase(databasePath : String) : DatabaseInterface {
         return res
     }
 
-    override fun getValue(key : String) : String? {
-        data.forEach { elem ->
-            if (elem.key == key)
-                return elem.value
-        }
-        return null
-    }
+    override fun getValue(key : String) : String? = data[key]
 
-    override fun contains(key: String) : Boolean {
-        return data.containsKey(key)
-    }
+    override fun contains(key: String) : Boolean = data.containsKey(key)
 
     override fun save() {
         val text = StringBuilder()
@@ -47,7 +37,7 @@ class MapDatabase(databasePath : String) : DatabaseInterface {
         File(path).writeText(text.toString())
     }
 
-    override fun allContent() : List<String> = data.map { elem -> "${elem.key}\n${elem.value}\n" }
+    override fun allContent() : List<Pair<String, String>> = data.map { elem -> Pair(elem.key, elem.value) }
 
     override fun clear() {
         data.clear()

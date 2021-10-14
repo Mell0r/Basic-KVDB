@@ -4,7 +4,7 @@ import java.io.File
 class Element(val key : String, val value: String)
 
 /** Array implementation of DatabaseInterface. Initializes by path to database. Path must be correct. */
-class ArrayDatabase(pathToDatabase : String) : DatabaseInterface {
+class ArrayDatabase(pathToDatabase : String) : Database {
     private val data = arrayListOf<Element>()
     private val path = pathToDatabase
 
@@ -62,7 +62,7 @@ class ArrayDatabase(pathToDatabase : String) : DatabaseInterface {
         File(path).writeText(text.toString())
     }
 
-    override fun allContent() : List<String> = data.map { elem -> "${elem.key}\n${elem.value}" }
+    override fun allContent() : List<Pair<String, String>> = data.map { elem -> Pair(elem.key, elem.value) }
 
     override fun clear() {
         data.clear()

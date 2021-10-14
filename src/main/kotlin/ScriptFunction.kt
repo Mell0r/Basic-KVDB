@@ -10,7 +10,7 @@ val innerCommands = listOf("assign", "contains", "value", "remove", "allContent"
 /** Prints message about error in line 'ind' with value 'str' in script */
 fun printScriptErrorMessageAndExit(ind : Int, str : String) {
     println("Error. Script is incorrect: line $ind(${str})")
-    exitProcess(-1)
+    throw Exception("Wrong script")
 }
 
 /** Asks user for path to script and calls script on it */
@@ -38,123 +38,86 @@ fun script(scriptPath : String) {
         if (innerCommands.contains(script[ind]) && currentDatabase == null)
             printScriptErrorMessageAndExit(ind, script[ind])
         when (script[ind]) {
-            "assign" -> {
+            Commands.ASSIGN.command -> {
                 if (ind + 2 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
                 currentDatabase!!.assignValue(script[ind + 1], script[ind + 2])
                 ind += 3
             }
-            "contains" -> {
+            Commands.CONTAINS.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
                 println(currentDatabase!!.contains(script[ind + 1]))
                 ind += 2
             }
-            "value" -> {
+            Commands.VALUE.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
                 println(currentDatabase!!.getValue(script[ind + 1]))
                 ind += 2
             }
-            "remove" -> {
+            Commands.REMOVE.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
                 println(currentDatabase!!.removeElement(script[ind + 1]))
                 ind += 2
             }
-            "allContent" -> {
+            Commands.ALL_CONTENT.command -> {
                 val content = currentDatabase!!.allContent()
                 for (elem in content)
                     println(elem)
                 ind++
             }
-            "clear" -> {
+            Commands.CLEAR.command -> {
                 currentDatabase!!.clear()
                 ind++
             }
-            "lastActions" -> {
+            Commands.LAST_ACTIONS.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
                 if (script[ind + 1].toIntOrNull() == null)
                     printScriptErrorMessageAndExit(ind + 1, script[ind + 1])
-                val quantity = script[ind + 1]
-                val journal = File(currentDatabase!!.journalPath()).readLines()
-                for (i in max(0, journal.size - quantity.toInt()) until journal.size) {
-                    println(journal[i])
-                }
+                lastActions(script[ind + 1].toInt()).forEach { println(it) }
                 ind += 2
             }
-            "allActions" -> {
-                val journal = File(currentDatabase!!.journalPath()).readLines()
-                for (elem in journal)
-                    println(elem)
+            Commands.ALL_ACTIONS.command -> {
+                allActions().forEach { print(it)}
                 ind++
             }
-            "create" -> {
-                if (currentDatabase != null)
-                    closeDatabase()
+            Commands.CREATE.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
-                val path = pathByName(script[ind + 1])
-                if (path == "" || File(path).exists())
-                    printScriptErrorMessageAndExit(ind + 1, script[ind + 1])
-
-                File(path).createNewFile()
-                File("${path}Journal").createNewFile()
-                val currentTime = SimpleDateFormat("dd/M/yyyy hh:mm:ss").format(Date())
-                File("${path}Journal").writeText("Created: $currentTime\n")
-
+                try { createDatabase(script[ind + 1]) }
+                catch(e : Exception) { printScriptErrorMessageAndExit(ind + 1, script[ind + 1]) }
                 ind += 2
             }
-            "open" -> {
-                if (currentDatabase != null)
-                    closeDatabase()
+            Commands.OPEN.command -> {
                 if (ind + 2 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
-                val path = pathByName(script[ind + 1])
-                if (path == "" || !File(path).exists())
-                    printScriptErrorMessageAndExit(ind + 1, script[ind + 1])
-                if (script[ind + 2] != "a" && script[ind + 2] != "m")
-                    printScriptErrorMessageAndExit(ind + 2, script[ind + 2])
-
-                when (script[ind + 2]) {
-                    "a" -> currentDatabase = ArrayDatabase(path)
-                    "m" -> currentDatabase = MapDatabase(path)
-                }
-                printActionToJournal("Opened")
-
+                try { openDatabase(script[ind + 1], script[ind + 2]) }
+                catch(e : Exception) { printScriptErrorMessageAndExit(ind, script[ind]) }
                 ind += 3
             }
-            "delete" -> {
-                if (currentDatabase != null)
-                    closeDatabase()
+            Commands.DELETE.command -> {
                 if (ind + 1 >= script.size)
                     printScriptErrorMessageAndExit(ind, script[ind])
-                val path = pathByName(script[ind + 1])
-                if (path == "" || !File(path).exists())
-                    printScriptErrorMessageAndExit(ind + 1, script[ind + 1])
-
-                File(path).delete()
-                File("${path}Journal").delete()
-
+                try { deleteDatabase(script[ind + 1]) }
+                catch(e : Exception) { printScriptErrorMessageAndExit(ind, script[ind]) }
                 ind += 2
             }
-            "save" -> {
+            Commands.SAVE.command -> {
                 currentDatabase?.save()
                 ind++
             }
-            "close" -> {
+            Commands.CLOSE.command -> {
                 closeDatabase()
                 ind++
             }
-            "exit" -> {
+            Commands.EXIT.command -> {
                 closeDatabase()
                 exitProcess(0)
             }
-            else -> {
-                println("Error. Script is incorrect: line $ind(${script[ind]})")
-                exitProcess(-1)
-            }
+            else -> printScriptErrorMessageAndExit(ind, script[ind])
         }
     }
 }

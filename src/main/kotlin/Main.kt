@@ -1,34 +1,55 @@
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 import kotlin.math.max
+import kotlin.system.exitProcess
 
-var currentDatabase : DatabaseInterface? = null //current opened database. It is null, if none is open.
+var currentDatabase : Database? = null //current opened database. It is null, if none is open.
 
 /** Prints short manual */
 fun printManual() {
-    println("Available commands:")
-    println("* 'create' - create new database wth given name.")
-    println("* 'open' - open database with given name by given mode. Processing mods are 'a'(Array) or 'm'(Map). Chosen mod " +
-            "defines how data will store in RAM. Enter this command before work with database.")
-    println("* 'delete' - delete database with given name.")
-    println("* 'save' - save changes in the opened database.")
-    println("* 'close' - save and close the opened database.")
-    println("* 'assign' - assign given value to given key in the opened database. If element  with given key " +
-            "already exists, its value rewrites.")
-    println("* 'remove' - remove element from the database. If element doesn't exist, nothing happens.")
-    println("* 'value' - get value by the key. If element with this key doesn't exist, print error message.")
-    println("* 'contains' - print 'true', then database contains given element, and 'false' otherwise.")
-    println("* 'clear' - clear opened database.")
-    println("* 'allContent' - print all content in the open database.")
-    println("* 'script' - complete all commands in the given text file.")
-    println("* 'lastActions' - print given number of previous actions with the opened database.")
-    println("* 'allActions' - print all previous actions with the opened database")
-    println("* 'exit' - close the utility. Please, do not close the utility by any other " +
-            "methods, otherwise all unsaved changes will be lost")
+    println("""Available commands:
+    * 'create' - create new database wth given name.
+    * 'open' - open database with given name by given mode. Processing mods are 'a'(Array) or 'm'(Map). 
+        Chosen mod defines how data will store in RAM. Enter this command before work with database.
+    * 'delete' - delete database with given name.
+    * 'save' - save changes in the opened database.
+    * 'close' - save and close the opened database.
+    * 'assign' - assign given value to given key in the opened database. 
+        If element  with given key already exists, its value rewrites.
+    * 'remove' - remove element from the database. If element doesn't exist, nothing happens.
+    * 'value' - get value by the key. If element with this key doesn't exist, print error message.
+    * 'contains' - print 'true', then database contains given element, and 'false' otherwise.
+    * 'clear' - clear opened database.
+    * 'allContent' - print all content in the open database.
+    * 'script' - complete all commands in the given text file.
+    * 'lastActions' - print given number of previous actions with the opened database.
+    * 'allActions' - print all previous actions with the opened database.
+    * 'script' - execute all commands line by line from given file. For more information, check README."
+    * 'exit' - close the utility. Please, do not close the utility by any other methods, 
+        otherwise all unsaved changes will be lost.""")
 }
 
-/** Interacting with user function. Asks user for string with given name with null assertion */
+enum class Commands(val command : String) {
+    HELP("help"),
+    CREATE("create"),
+    OPEN("open"),
+    DELETE("delete"),
+    SAVE("save"),
+    CLOSE("close"),
+    ASSIGN("assign"),
+    REMOVE("remove"),
+    VALUE("value"),
+    CONTAINS("contains"),
+    CLEAR("clear"),
+    SCRIPT("script"),
+    ALL_CONTENT("allContent"),
+    LAST_ACTIONS("lastActions"),
+    ALL_ACTIONS("allActions"),
+    EXIT("exit")
+}
+
+/** Asks user for string with given name with null assertion */
 fun readString(name : String) : String {
     print("Enter $name: ")
     var s = readLine()
@@ -39,9 +60,6 @@ fun readString(name : String) : String {
     return s
 }
 
-/** Returns path to all data by its name */
-fun pathByName(name : String) = "Data\\$name"
-
 /** Returns true and prints notification, if none is opened now */
 fun checkNotOpened() : Boolean {
     return if (currentDatabase == null) {
@@ -51,16 +69,8 @@ fun checkNotOpened() : Boolean {
     else false
 }
 
-/** Prints given action and current time to opened database journal */
-fun printActionToJournal(action : String) {
-    if (currentDatabase == null)
-        return
-    val currentTime = SimpleDateFormat("dd/M/yyyy hh:mm:ss").format(Date())
-    File(currentDatabase!!.journalPath()).appendText("$action: $currentTime\n")
-}
-
-/** Interacting with user function. Asks the name to the new database and creates it */
-fun createDatabase() {
+/** Asks the name to the new database */
+fun readNotExistingDatabaseName() : String {
     print("Enter database name or 'back': ")
     var input = readLine()
     while (input == null || input == "" || (input != "back" && File(pathByName(input)).exists())) {
@@ -70,19 +80,11 @@ fun createDatabase() {
         }
         input = readLine()
     }
-    if (input == "back")
-        return
-    File(pathByName(input)).createNewFile()
-    File("${pathByName(input)}Journal").createNewFile()
-    val currentTime = SimpleDateFormat("dd/M/yyyy hh:mm:ss").format(Date())
-    File("${pathByName(input)}Journal").writeText("Created: $currentTime\n")
+    return input
 }
 
-/** Interacting with user function. Closes current database, if it is open, then
- * asks the name of the database and opens it, assigning it to 'currentDatabase' */
-fun openDatabase() {
-    if (currentDatabase != null)
-        closeDatabase()
+/** Asks the name to the existing database */
+fun readExistingDatabaseName() : String {
     print("Enter database name or 'back': ")
     var input = readLine()
     while (input == null || input == "" || (input != "back" && !File(pathByName(input)).exists())) {
@@ -92,46 +94,43 @@ fun openDatabase() {
         }
         input = readLine()
     }
-    if (input == "back")
-        return
+    return input
+}
 
+/** Asks the processing mode to the database */
+fun readProcessingMode() : String {
     print("Enter processing mod ('a' for array or 'm' for map): ")
     var processingMode = readLine()
     while (processingMode != "a" && processingMode != "m") {
         print("Wrong input. Please, try again: ")
         processingMode = readLine()
     }
-
-    when (processingMode) {
-        "a" -> currentDatabase = ArrayDatabase(pathByName(input))
-        "m" -> currentDatabase = MapDatabase(pathByName(input))
-    }
-    printActionToJournal("Opened")
+    return processingMode
 }
 
-/** Interacting with user function. Asks the name of the database and delete it */
-fun deleteDatabase() {
-    if (currentDatabase != null)
-        closeDatabase()
-    print("Enter database name or 'back': ")
-    var input = readLine()
-    while (input == null || input == "" || (input != "back" && !File(pathByName(input)).exists())) {
-        when (input) {
-            null, "" -> print("Empty input. Please, try again: ")
-            else -> print("Database with this name doesn't exist. Please, try again: ")
-        }
-        input = readLine()
-    }
-    if (input == "back")
-        return
+fun createDatabaseUI() {
+    val name = readNotExistingDatabaseName()
+    if (name != "back")
+        createDatabase(name)
+}
 
-    File(pathByName(input)).delete()
-    File("${pathByName(input)}Journal").delete()
+/** Asks the name of the database and calls 'deleteDatabase' by it */
+fun deleteDatabaseUI() {
+    val name = readExistingDatabaseName()
+    if (name != "back")
+        deleteDatabase(name)
+}
+
+/** Asks the name of the database and the processingMode and calls 'openDatabase' by it */
+fun openDatabaseUI() {
+    val name = readExistingDatabaseName()
+    if (name != "back")
+        openDatabase(name, readProcessingMode())
 }
 
 /** Checks database by 'checkNotOpened', asks user for key and value by 'readString' and calls 'assignValue'
  * of the current database, if it is opened */
-fun assignValue() {
+fun assignValueUI() {
     if (checkNotOpened())
         return
     val key = readString("key")
@@ -141,7 +140,7 @@ fun assignValue() {
 
 /** Checks database by 'checkNotOpened', asks user for key by 'readString' and calls 'removeElement'
  * of the current database, if it is opened */
-fun removeElement() {
+fun removeElementUI() {
     if (checkNotOpened())
         return
     val key = readString("key")
@@ -154,7 +153,7 @@ fun removeElement() {
 
 /** Checks database by 'checkNotOpened', asks user for key by 'readString' and calls 'getValue'
  * of the current database, if it is opened */
-fun getValue() {
+fun getValueUI() {
     if (checkNotOpened())
         return
     val key = readString("key")
@@ -167,7 +166,7 @@ fun getValue() {
 
 /** Checks database by 'checkNotOpened', asks user for key by 'readString' and calls 'contains'
  *  of the current database, if it is opened */
-fun contains() {
+fun containsUI() {
     if (checkNotOpened())
         return
     val key = readString("key")
@@ -176,7 +175,7 @@ fun contains() {
 
 /** Interacting with user function. Checks database by 'checkNotOpened', asks user for quantity
  * and prints given number of actions with database, if it ts opened */
-fun lastActions() {
+fun lastActionsUI() {
     if (checkNotOpened())
         return
     print("Enter actions quantity: ")
@@ -185,9 +184,8 @@ fun lastActions() {
         print("Wrong input. Please, try again: ")
         quantity = readLine()
     }
-    val journal = File(currentDatabase!!.journalPath()).readLines()
-    for (i in max(0, journal.size - quantity.toInt()) until journal.size) {
-        println(journal[i])
+    lastActions(quantity.toInt()).forEach {
+        print(it)
     }
 }
 
@@ -195,43 +193,39 @@ fun lastActions() {
 fun printAllActions() {
     if (checkNotOpened())
         return
-    File(currentDatabase!!.journalPath()).readLines().forEach {
-        println(it)
-    }
+    allActions().forEach{ print(it) }
 }
 
 /** Checks database by 'checkNotOpened' and calls 'save' for it, if it is open */
-fun save() {
+fun saveUI() {
     if (checkNotOpened())
         return
     currentDatabase?.save()
 }
 
 /** Checks database by 'checkNotOpened' and call 'printAllContent' for it, if it is open */
-fun printAllContent() {
+fun printAllContentUI() {
     if (checkNotOpened())
         return
     val content = currentDatabase!!.allContent()
     for (elem in content) {
-        println("Key: ${elem.split('\n')[0]}")
-        println("Value: ${elem.split('\n')[1]}")
+        println("Key: ${elem.first}")
+        println("Value: ${elem.second}")
     }
 }
 
 /** Checks database by 'checkNotOpened' and call 'clear' for it, if it is open */
-fun clearDatabase() {
+fun clearDatabaseUI() {
     if (checkNotOpened())
         return
     currentDatabase?.clear()
 }
 
 /** Checks database by 'checkNotOpened' and call 'save' for it, if it is open, then assign null to currentDatabase */
-fun closeDatabase() {
+fun closeDatabaseUI() {
     if (checkNotOpened())
         return
-    currentDatabase?.save()
-    currentDatabase = null
-    printActionToJournal("Closed")
+    closeDatabase()
 }
 
 fun main() {
@@ -240,22 +234,22 @@ fun main() {
     var command = readLine()
     while (command != null && command != "exit") {
         when (command) {
-            "help" -> printManual()
-            "create" -> createDatabase()
-            "delete" -> deleteDatabase()
-            "open" -> openDatabase()
-            "save" -> save()
-            "clear" -> clearDatabase()
-            "close" -> closeDatabase()
-            "assign" -> assignValue()
-            "remove" -> removeElement()
-            "value" -> getValue()
-            "script" -> scriptUI()
-            "contains" -> contains()
-            "allContent" -> printAllContent()
-            "lastActions" -> lastActions()
-            "allActions" -> printAllActions()
-            "exit" -> closeDatabase()
+            Commands.HELP.command -> printManual()
+            Commands.CREATE.command -> createDatabaseUI()
+            Commands.DELETE.command -> deleteDatabaseUI()
+            Commands.OPEN.command -> openDatabaseUI()
+            Commands.SAVE.command -> saveUI()
+            Commands.CLEAR.command -> clearDatabaseUI()
+            Commands.CLOSE.command -> closeDatabaseUI()
+            Commands.ASSIGN.command -> assignValueUI()
+            Commands.REMOVE.command -> removeElementUI()
+            Commands.VALUE.command -> getValueUI()
+            Commands.SCRIPT.command -> scriptUI()
+            Commands.CONTAINS.command -> containsUI()
+            Commands.ALL_CONTENT.command -> printAllContentUI()
+            Commands.LAST_ACTIONS.command -> lastActionsUI()
+            Commands.ALL_ACTIONS.command -> printAllActions()
+            Commands.EXIT.command -> closeDatabaseUI()
             else -> println("Wrong command, please try again")
         }
         command = readLine()

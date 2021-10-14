@@ -1,14 +1,8 @@
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.PrintStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.BeforeTest
-import kotlin.test.AfterTest
 
-/* There I will use those redactions: A - assign, R - remove, C - contains, V - value, D - delete */
-
-fun testDatabase(database: DatabaseInterface, commandsPath : String) {
+fun testDatabase(database: Database, commandsPath : String) {
     require(File(commandsPath).exists())
     require(File("${commandsPath}.result").exists())
 
@@ -18,29 +12,31 @@ fun testDatabase(database: DatabaseInterface, commandsPath : String) {
     var iInCom = 0
     while (iInCom < commands.size) {
         when (commands[iInCom]) {
-            "assign" -> {
+            Commands.ASSIGN.command -> {
                 database.assignValue(commands[iInCom + 1], commands[iInCom + 2])
                 iInCom += 3
             }
-            "contains" -> {
+            Commands.CONTAINS.command -> {
                 assertEquals(result[iInRes++], database.contains(commands[iInCom + 1]).toString())
                 iInCom += 2
             }
-            "value" -> {
+            Commands.VALUE.command -> {
                 assertEquals(result[iInRes++], database.getValue(commands[iInCom + 1]).toString())
                 iInCom += 2
             }
-            "remove" -> {
+            Commands.REMOVE.command -> {
                 assertEquals(result[iInRes++], database.removeElement(commands[iInCom + 1]).toString())
                 iInCom += 2
             }
-            "allContent" -> {
+            Commands.ALL_CONTENT.command -> {
                 val content = database.allContent()
-                for (i in 0 until 2 * content.size)
-                    assertEquals(result[iInRes++], content[i / 2].split('\n')[i % 2])
+                for (i in content.indices) {
+                    assertEquals(result[iInRes++], content[i].first)
+                    assertEquals(result[iInRes++], content[i].second)
+                }
                 iInCom++
             }
-            "clear" -> {
+            Commands.CLEAR.command -> {
                 database.clear()
                 iInCom++
             }
@@ -53,17 +49,17 @@ internal class TestArrayDatabase {
     private val database = ArrayDatabase("TestData/test.db")
 
     @Test
-    fun testAC() {
+    fun testAssignContains() {
         testDatabase(database, "TestData/AC")
     }
 
     @Test
-    fun testAV() {
+    fun testAssignValue() {
         testDatabase(database, "TestData/AV")
     }
 
     @Test
-    fun testAVRC() {
+    fun testAssignValueRemoveContains() {
         testDatabase(database, "TestData/AVRC")
     }
 
@@ -94,32 +90,5 @@ internal class TestMapDatabase {
     @Test
     fun testAll() {
         testDatabase(database, "TestData/All")
-    }
-}
-
-internal class TestScript {
-    private val standardOut = System.out
-    private val stream = ByteArrayOutputStream()
-
-    @BeforeTest
-    fun setUp() {
-        System.setOut(PrintStream(stream))
-    }
-
-    @AfterTest
-    fun tearDown() {
-        System.setOut(standardOut)
-    }
-
-    private fun databaseSystemTest(scriptPath : String, resPath : String) {
-        script(scriptPath)
-        val actualRes = stream.toString().trim().lines()
-        val expectedRes = File(resPath).readLines()
-        assertEquals(expectedRes, actualRes)
-    }
-
-    @Test
-    fun databaseSystemShortTest() {
-        databaseSystemTest("TestData/DatabaseSystemShortTest", "TestData/DatabaseSystemShortTest.result")
     }
 }

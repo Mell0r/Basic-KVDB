@@ -1,7 +1,7 @@
 /**
  * Interface, containing frame functions for database.
  */
-interface DatabaseInterface {
+interface Database {
     /** Returns the path to journal of this database. */
     fun journalPath() : String = ""
 
@@ -23,7 +23,7 @@ interface DatabaseInterface {
 
     /** Returns all content in database as List<String>, where each string is "*elem.key*\n*elem.value" for each
      * database element. */
-    fun allContent() : List<String> = listOf()
+    fun allContent() : List<Pair<String, String>> = listOf()
 
     /** Deletes all elements from the database. */
     fun clear() {}
