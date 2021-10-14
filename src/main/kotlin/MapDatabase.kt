@@ -39,7 +39,5 @@ class MapDatabase(databasePath : String) : Database {
 
     override fun allContent() : List<Pair<String, String>> = data.map { elem -> Pair(elem.key, elem.value) }
 
-    override fun clear() {
-        data.clear()
-    }
+    override fun clear() = data.clear()
 }

@@ -20,34 +20,25 @@ class ArrayDatabase(pathToDatabase : String) : Database {
     }
 
     override fun assignValue(key : String, value : String) {
-        if (!contains(key)) {
-            data += Element(key, value)
-            return
-        }
-        for (ind in data.indices)
-            if (data[ind].key == key)
-                data[ind] = Element(key, value)
+        val ind = data.indexOfFirst { it.key == key }
+        if (ind >= 0)
+            data[ind] = Element(key, value)
+        else
+            data.add( Element(key, value))
     }
 
     override fun removeElement(key : String) : String? {
-        for (ind in data.indices) {
-            if (data[ind].key == key) {
-                val res = data[ind]
-                data[ind] = data.last()
-                data.removeLast()
-                return res.value
-            }
+        val ind = data.indexOfFirst { it.key == key }
+        if (ind >= 0) {
+            val res = data[ind]
+            data[ind] = data.last()
+            data.removeLast()
+            return res.value
         }
         return null
     }
 
-    override fun getValue(key : String) : String? {
-        data.forEach { elem ->
-            if (elem.key == key)
-                return elem.value
-        }
-        return null
-    }
+    override fun getValue(key : String) : String? = data.find { it.key == key }?.value
 
     override fun contains(key: String) : Boolean {
         return getValue(key) != null

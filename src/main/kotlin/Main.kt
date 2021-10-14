@@ -108,6 +108,7 @@ fun readProcessingMode() : String {
     return processingMode
 }
 
+/** Asks user for name and calls 'createDatabase' by it */
 fun createDatabaseUI() {
     val name = readNotExistingDatabaseName()
     if (name != "back")
@@ -180,7 +181,7 @@ fun lastActionsUI() {
         return
     print("Enter actions quantity: ")
     var quantity = readLine()
-    while (quantity == null || quantity.toIntOrNull() == null) {
+    while (quantity?.toIntOrNull() == null) {
         print("Wrong input. Please, try again: ")
         quantity = readLine()
     }
